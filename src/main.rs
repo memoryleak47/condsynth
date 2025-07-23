@@ -15,7 +15,7 @@ mod fmt;
 pub use fmt::*;
 
 fn main() {
-    let p = cegis(max_n(6), mysynth);
+    let p = cegis(max_n(6), MySynth);
     dbg!(&p);
     dbg!(size(&p));
 }
