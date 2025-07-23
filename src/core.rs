@@ -35,12 +35,12 @@ pub fn cegis(problem: Problem, synth: Synthesizer) -> P {
     let mut ces = Vec::new();
     loop {
         let p = synth(&ces);
-        dbg!(&ces);
         dbg!(&p);
         assert!(ces.iter().all(|ce| eval(&p, &ce.sigma) == ce.r));
 
-        if let Some(p2) = problem(&p) {
-            ces.push(p2);
+        if let Some(ce) = problem(&p) {
+            dbg!(&ce);
+            ces.push(ce);
         } else {
             return p;
         }

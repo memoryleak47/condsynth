@@ -37,7 +37,7 @@ pub fn mysynth(ces: &[CounterExample]) -> P {
 
     let (x, y) = (best_x, best_y);
     let l: Vec<_> = ces.iter().filter(|ce| ce.sigma[&x] < ce.sigma[&y]).cloned().collect();
-    let r: Vec<_> = ces.iter().filter(|ce| ce.sigma[&x] < ce.sigma[&y]).cloned().collect();
+    let r: Vec<_> = ces.iter().filter(|ce| ce.sigma[&x] >= ce.sigma[&y]).cloned().collect();
     
     let l = mysynth(&l);
     let r = mysynth(&r);
