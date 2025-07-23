@@ -12,7 +12,10 @@ mod mysynth;
 pub use mysynth::*;
 
 mod fmt;
+pub use fmt::*;
 
 fn main() {
-    dbg!(cegis(max_n(3), mysynth));
+    let p = cegis(max_n(6), mysynth);
+    dbg!(&p);
+    dbg!(size(&p));
 }

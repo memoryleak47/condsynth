@@ -24,3 +24,10 @@ impl Debug for CounterExample {
         write!(f, "] -> {}", self.r)
     }
 }
+
+pub fn size(p: &P) -> usize {
+    match p {
+        P::Var(_) => 1,
+        P::IfLt(l) => 1 + l.iter().map(size).sum::<usize>(),
+    }
+}
