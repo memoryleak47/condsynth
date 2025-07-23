@@ -4,8 +4,27 @@ fn delta(x: usize, y: usize) -> usize {
     if x > y { x-y } else { y-x }
 }
 
-fn heur_cost(l: &[CounterExample], r: &[CounterExample]) -> usize {
-    delta(l.len(), r.len())
+fn heur_cost(l: &[CounterExample], r: &[CounterExample], sig: &[Symbol]) -> usize {
+    // old heuristic: delta(l.len(), r.len())
+    varcnt(l, sig).max(varcnt(r, sig))
+}
+
+fn varcnt(ces: &[CounterExample], sig: &[Symbol]) -> usize {
+    if ces.is_empty() { return 0; }
+
+    let mut ces: Vec<CounterExample> = ces.iter().cloned().collect();
+
+    let mut best_score = 0;
+    let mut best_var = sig[0];
+    for v in sig {
+        let score = ces.iter().filter(|ce| ce.sigma[v] == ce.r).count();
+        if score > best_score {
+            best_var = *v;
+            best_score = score;
+        }
+    }
+    let rest: Vec<_> = ces.iter().filter(|ce| ce.sigma[&best_var] != ce.r).cloned().collect();
+    1 + varcnt(&*rest, sig)
 }
 
 pub fn mysynth(ces: &[CounterExample], vars: &[Symbol]) -> P {
@@ -37,7 +56,7 @@ pub fn mysynth(ces: &[CounterExample], vars: &[Symbol]) -> P {
                     r.push(ce.clone());
                 }
             }
-            let cost = heur_cost(&l, &r);
+            let cost = heur_cost(&l, &r, vars);
             if cost < best_cost {
                 best_x = *x;
                 best_y = *y;
