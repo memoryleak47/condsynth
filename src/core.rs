@@ -10,9 +10,34 @@ pub enum P {
 pub type Sigma = Map<Symbol, Nat>;
 
 pub struct CounterExample {
-    sigma: Sigma,
-    r: Nat,
+    pub sigma: Sigma,
+    pub r: Nat,
 }
 
 pub type Problem = fn(&P) -> Option<CounterExample>;
 pub type Synthesizer = fn(&[CounterExample]) -> P;
+
+pub fn eval(p: &P, sigma: &Sigma) -> Nat {
+    match p {
+        P::Var(s) => sigma[s],
+        P::IfLt(box [l, r, yes, no]) => {
+            if eval(l, sigma) < eval(r, sigma) {
+                eval(yes, sigma)
+            } else {
+                eval(no, sigma)
+            }
+        },
+    }
+}
+
+pub fn cegis(problem: Problem, synth: Synthesizer) -> P {
+    let mut ces = Vec::new();
+    loop {
+        let p = synth(&ces);
+        if let Some(p2) = problem(&p) {
+            ces.push(p2);
+        } else {
+            return p;
+        }
+    }
+}
