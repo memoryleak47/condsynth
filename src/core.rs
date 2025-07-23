@@ -22,9 +22,7 @@ pub trait Problem {
     fn check(&self, p: &P) -> Option<CounterExample>;
 }
 
-pub trait Synth {
-    fn synth<'a>(&self, it: impl Iterator<Item=&'a CounterExample> + Clone, num_vars: usize) -> P;
-}
+pub type Synth = fn(&[CounterExample], usize) -> P;
 
 pub fn eval(p: &P, sigma: &Sigma) -> Nat {
     match p {
@@ -39,10 +37,10 @@ pub fn eval(p: &P, sigma: &Sigma) -> Nat {
     }
 }
 
-pub fn cegis(problem: impl Problem, synth: impl Synth) -> P {
+pub fn cegis(problem: impl Problem, synth: Synth) -> P {
     let mut ces = Vec::new();
     loop {
-        let p = synth.synth(ces.iter(), problem.num_vars());
+        let p = synth(&ces, problem.num_vars());
         dbg!(&p);
         assert!(ces.iter().all(|ce| eval(&p, &ce.sigma) == ce.r));
 
