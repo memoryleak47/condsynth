@@ -45,12 +45,11 @@ fn sigmas(sig: &[Symbol], n: u32) -> Vec<Sigma> {
     outs
 }
 
-pub fn max3() -> impl Problem {
-    let x = Symbol::new("x");
-    let y = Symbol::new("y");
-    let z = Symbol::new("z");
-    let sig = vec![x, y, z];
+pub fn max_n(n: u32) -> impl Problem {
+    assert!(n > 0);
+
+    let sig: Vec<Symbol> = (0..n).map(|i| Symbol::new(format!("x{i}"))).collect();
     enumerated_problem(sig, move |sigma| {
-        sigma[&x].max(sigma[&y]).max(sigma[&z])
+        sigma.values().copied().fold(0, |x, y| x.max(y))
     })
 }

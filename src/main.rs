@@ -14,5 +14,5 @@ pub use mysynth::*;
 mod fmt;
 
 fn main() {
-    dbg!(cegis(max3(), mysynth));
+    dbg!(cegis(max_n(3), mysynth));
 }
