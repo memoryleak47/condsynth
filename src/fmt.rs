@@ -9,3 +9,18 @@ impl Debug for P {
         }
     }
 }
+
+
+impl Debug for CounterExample {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "[")?;
+        for (i, (x, n)) in self.sigma.iter().enumerate() {
+            write!(f, "{x}: {n}")?;
+            if i != self.sigma.len()-1 {
+                write!(f, ", ")?;
+            }
+            
+        }
+        write!(f, "] -> {}", self.r)
+    }
+}
