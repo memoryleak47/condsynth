@@ -4,15 +4,13 @@ fn delta(x: usize, y: usize) -> usize {
     if x > y { x-y } else { y-x }
 }
 
-fn heur_cost(l: &[CounterExample], r: &[CounterExample], num_vars: usize) -> usize {
+fn heur_cost(l: &[&CounterExample], r: &[&CounterExample], num_vars: usize) -> usize {
     // old heuristic: delta(l.len(), r.len())
     varcnt(l, num_vars).max(varcnt(r, num_vars))
 }
 
-fn varcnt(ces: &[CounterExample], num_vars: usize) -> usize {
+fn varcnt(ces: &[&CounterExample], num_vars: usize) -> usize {
     if ces.is_empty() { return 0; }
-
-    let mut ces: Vec<CounterExample> = ces.iter().cloned().collect();
 
     let mut best_score = 0;
     let mut best_var = 0;
@@ -23,11 +21,17 @@ fn varcnt(ces: &[CounterExample], num_vars: usize) -> usize {
             best_score = score;
         }
     }
-    let rest: Vec<_> = ces.iter().filter(|ce| ce.sigma[best_var] != ce.r).cloned().collect();
+    let rest: Vec<&CounterExample> = ces.iter().copied().filter(|ce| ce.sigma[best_var] != ce.r).collect();
     1 + varcnt(&*rest, num_vars)
 }
 
+
 pub fn mysynth(ces: &[CounterExample], num_vars: usize) -> P {
+    let ces: Vec<&CounterExample> = ces.iter().collect();
+    mysynth_impl(&*ces, num_vars)
+}
+
+fn mysynth_impl(ces: &[&CounterExample], num_vars: usize) -> P {
     if ces.is_empty() {
         return P::Var(0);
     }
@@ -51,9 +55,9 @@ pub fn mysynth(ces: &[CounterExample], num_vars: usize) -> P {
             let mut r = Vec::new();
             for ce in ces.iter() {
                 if ce.sigma[x] < ce.sigma[y] {
-                    l.push(ce.clone());
+                    l.push(*ce);
                 } else {
-                    r.push(ce.clone());
+                    r.push(*ce);
                 }
             }
             let cost = heur_cost(&l, &r, num_vars);
@@ -70,8 +74,8 @@ pub fn mysynth(ces: &[CounterExample], num_vars: usize) -> P {
     assert!(best_l.len() > 0);
     assert!(best_r.len() > 0);
 
-    let l = mysynth(&best_l, num_vars);
-    let r = mysynth(&best_r, num_vars);
+    let l = mysynth_impl(&best_l, num_vars);
+    let r = mysynth_impl(&best_r, num_vars);
 
     P::IfLt(Box::new([P::Var(best_x), P::Var(best_y), l, r]))
 }
