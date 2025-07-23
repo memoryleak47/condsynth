@@ -67,6 +67,9 @@ pub fn mysynth(ces: &[CounterExample], vars: &[Symbol]) -> P {
         }
     }
 
+    assert!(best_l.len() > 0);
+    assert!(best_r.len() > 0);
+
     let l = mysynth(&best_l, vars);
     let r = mysynth(&best_r, vars);
 
