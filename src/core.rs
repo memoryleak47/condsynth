@@ -15,8 +15,12 @@ pub struct CounterExample {
     pub r: Nat,
 }
 
-pub type Problem = fn(&P) -> Option<CounterExample>;
-pub type Synthesizer = fn(&[CounterExample]) -> P;
+pub trait Problem {
+    fn signature(&self) -> &[Symbol];
+    fn check(&self, p: &P) -> Option<CounterExample>;
+}
+
+pub type Synthesizer = fn(&[CounterExample], &[Symbol]) -> P;
 
 pub fn eval(p: &P, sigma: &Sigma) -> Nat {
     match p {
@@ -31,14 +35,14 @@ pub fn eval(p: &P, sigma: &Sigma) -> Nat {
     }
 }
 
-pub fn cegis(problem: Problem, synth: Synthesizer) -> P {
+pub fn cegis(problem: impl Problem, synth: Synthesizer) -> P {
     let mut ces = Vec::new();
     loop {
-        let p = synth(&ces);
+        let p = synth(&ces, problem.signature());
         dbg!(&p);
         assert!(ces.iter().all(|ce| eval(&p, &ce.sigma) == ce.r));
 
-        if let Some(ce) = problem(&p) {
+        if let Some(ce) = problem.check(&p) {
             dbg!(&ce);
             ces.push(ce);
         } else {

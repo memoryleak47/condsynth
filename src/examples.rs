@@ -1,62 +1,56 @@
 use crate::*;
 
-pub fn max3(p: &P) -> Option<CounterExample> {
-    let vs = &[
-        (22, 4, 2),
-        (22, 5, 4),
-        (22, 400, 2),
+pub fn enumerated_problem<F: Fn(&Sigma) -> Nat>(sig: Vec<Symbol>, f: F) -> impl Problem {
+    struct EnumeratedProblem<F: Fn(&Sigma) -> Nat> {
+        sig: Vec<Symbol>,
+        sigmas: Vec<Sigma>,
+        f: F,
+    }
 
-        (0, 1, 2),
-        (0, 2, 1),
-        (1, 0, 2),
-        (1, 2, 0),
-        (2, 0, 1),
-        (2, 1, 0),
-    ];
-
-    let s_x = Symbol::from("x");
-    let s_y = Symbol::from("y");
-    let s_z = Symbol::from("z");
-
-    for &(x, y, z) in vs {
-        let r = x.max(y).max(z);
-        let mut sigma = Sigma::new();
-        sigma.insert(s_x, x);
-        sigma.insert(s_y, y);
-        sigma.insert(s_z, z);
-        if eval(p, &sigma) != r {
-            let ce = CounterExample { sigma, r };
-            return Some(ce);
+    impl<F: Fn(&Sigma) -> Nat> Problem for EnumeratedProblem<F> {
+        fn signature(&self) -> &[Symbol] { &*self.sig }
+        fn check(&self, p: &P) -> Option<CounterExample> {
+            for sigma in &self.sigmas {
+                let r = (self.f)(sigma);
+                if eval(p, &sigma) != r {
+                    let ce = CounterExample { sigma: sigma.clone(), r };
+                    return Some(ce);
+                }
+            }
+            None
         }
     }
-    None
+
+    EnumeratedProblem {
+        sigmas: sigmas(&sig, sig.len() as _),
+        sig: sig,
+        f,
+    }
 }
 
-pub fn max6(p: &P) -> Option<CounterExample> {
-    let vs = &[
-        [0, 1, 2, 4, 2, 3],
-        [22, 4, 2, 2, 4, 2],
-        [22, 5, 4, 8, 7, 6],
-        [22, 5, 400, 8, 7, 6],
-        [22, 5, 40, 800, 7, 6],
-        [22, 5, 40, 4, 700, 6],
-        [22, 5, 40, 4, 70, 99],
-        [22, 200, 40, 4, 70, 99],
-        // TODO add more entries (automatically) to make this complete.
-    ];
+fn sigmas(sig: &[Symbol], n: u32) -> Vec<Sigma> {
+    if sig.is_empty() {
+        return vec![Sigma::new()];
+    }
 
-    for &v in vs {
-        let r = v.iter().copied().fold(0, |x, y| x.max(y));
-        let mut sigma = Sigma::new();
-        for i in 0..6 {
-            let symb = if i == 0 { String::new() } else { i.to_string() };
-            let symb = Symbol::new(format!("x{symb}"));
-            sigma.insert(symb, v[i]);
-        }
-        if eval(p, &sigma) != r {
-            let ce = CounterExample { sigma, r };
-            return Some(ce);
+    let mut outs = Vec::new();
+    for rest in sigmas(&sig[1..], n) {
+        for x in 0..n {
+            let mut sigma = Sigma::new();
+            sigma.insert(sig[0], x);
+            sigma.extend(&rest);
+            outs.push(sigma);
         }
     }
-    None
+    outs
+}
+
+pub fn max3() -> impl Problem {
+    let x = Symbol::new("x");
+    let y = Symbol::new("y");
+    let z = Symbol::new("z");
+    let sig = vec![x, y, z];
+    enumerated_problem(sig, move |sigma| {
+        sigma[&x].max(sigma[&y]).max(sigma[&z])
+    })
 }
