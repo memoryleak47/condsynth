@@ -31,10 +31,6 @@ pub fn mysynth(ces: &[CounterExample], num_vars: usize) -> P {
 }
 
 fn mysynth_impl<'a>(ces: impl Iterator<Item=&'a CounterExample> + Clone, num_vars: usize) -> P {
-    if ces.clone().all(|_| false) {
-        return P::Var(0);
-    }
-
     for x in 0..num_vars {
         if ces.clone().all(|ce| ce.r == ce.sigma[x]) {
             return P::Var(x);
