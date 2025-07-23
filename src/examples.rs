@@ -1,14 +1,14 @@
 use crate::*;
 
-pub fn enumerated_problem<F: Fn(&Sigma) -> Nat>(sig: Vec<Symbol>, f: F) -> impl Problem {
+pub fn enumerated_problem<F: Fn(&Sigma) -> Nat>(num_vars: usize, f: F) -> impl Problem {
     struct EnumeratedProblem<F: Fn(&Sigma) -> Nat> {
-        sig: Vec<Symbol>,
+        num_vars: usize,
         sigmas: Vec<Sigma>,
         f: F,
     }
 
     impl<F: Fn(&Sigma) -> Nat> Problem for EnumeratedProblem<F> {
-        fn signature(&self) -> &[Symbol] { &*self.sig }
+        fn num_vars(&self) -> usize { self.num_vars }
         fn check(&self, p: &P) -> Option<CounterExample> {
             for sigma in &self.sigmas {
                 let r = (self.f)(sigma);
@@ -22,22 +22,22 @@ pub fn enumerated_problem<F: Fn(&Sigma) -> Nat>(sig: Vec<Symbol>, f: F) -> impl 
     }
 
     EnumeratedProblem {
-        sigmas: sigmas(&sig, sig.len() as _),
-        sig: sig,
+        num_vars,
+        sigmas: sigmas(0, num_vars),
         f,
     }
 }
 
-fn sigmas(sig: &[Symbol], n: u32) -> Vec<Sigma> {
-    if sig.is_empty() {
+fn sigmas(i: usize, num_vars: usize) -> Vec<Sigma> {
+    if i == num_vars {
         return vec![Sigma::new()];
     }
 
     let mut outs = Vec::new();
-    for rest in sigmas(&sig[1..], n) {
-        for x in 0..n {
+    for rest in sigmas(i+1, num_vars) {
+        for x in 0..num_vars {
             let mut sigma = Sigma::new();
-            sigma.insert(sig[0], x);
+            sigma.push(x);
             sigma.extend(&rest);
             outs.push(sigma);
         }
@@ -45,11 +45,10 @@ fn sigmas(sig: &[Symbol], n: u32) -> Vec<Sigma> {
     outs
 }
 
-pub fn max_n(n: u32) -> impl Problem {
+pub fn max_n(n: usize) -> impl Problem {
     assert!(n > 0);
 
-    let sig: Vec<Symbol> = (0..n).map(|i| Symbol::new(format!("x{i}"))).collect();
-    enumerated_problem(sig, move |sigma| {
-        sigma.values().copied().fold(0, |x, y| x.max(y))
+    enumerated_problem(n, move |sigma| {
+        sigma.iter().copied().fold(0, |x, y| x.max(y))
     })
 }

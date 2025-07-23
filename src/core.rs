@@ -1,13 +1,13 @@
 use crate::*;
 
-pub type Nat = u32;
+pub type Nat = usize;
 
 pub enum P {
-    Var(Symbol),
+    Var(Var),
     IfLt(Box<[P; 4]>),
 }
 
-pub type Sigma = Map<Symbol, Nat>;
+pub type Sigma = Vec<Nat>;
 
 #[derive(Clone)]
 pub struct CounterExample {
@@ -15,16 +15,18 @@ pub struct CounterExample {
     pub r: Nat,
 }
 
+pub type Var = usize;
+
 pub trait Problem {
-    fn signature(&self) -> &[Symbol];
+    fn num_vars(&self) -> usize;
     fn check(&self, p: &P) -> Option<CounterExample>;
 }
 
-pub type Synthesizer = fn(&[CounterExample], &[Symbol]) -> P;
+pub type Synthesizer = fn(&[CounterExample], usize) -> P;
 
 pub fn eval(p: &P, sigma: &Sigma) -> Nat {
     match p {
-        P::Var(s) => sigma[s],
+        P::Var(s) => sigma[*s],
         P::IfLt(box [l, r, yes, no]) => {
             if eval(l, sigma) < eval(r, sigma) {
                 eval(yes, sigma)
@@ -38,7 +40,7 @@ pub fn eval(p: &P, sigma: &Sigma) -> Nat {
 pub fn cegis(problem: impl Problem, synth: Synthesizer) -> P {
     let mut ces = Vec::new();
     loop {
-        let p = synth(&ces, problem.signature());
+        let p = synth(&ces, problem.num_vars());
         dbg!(&p);
         assert!(ces.iter().all(|ce| eval(&p, &ce.sigma) == ce.r));
 
