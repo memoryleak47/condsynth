@@ -9,6 +9,7 @@ pub enum P {
 
 pub type Sigma = Map<Symbol, Nat>;
 
+#[derive(Clone)]
 pub struct CounterExample {
     pub sigma: Sigma,
     pub r: Nat,
