@@ -27,12 +27,12 @@ fn varcnt(ces: &[&CounterExample], num_vars: usize) -> usize {
 
 
 pub fn mysynth(ces: &[CounterExample], num_vars: usize) -> P {
-    mysynth_impl(ces.iter(), num_vars)
+    mysynth_impl(ces, num_vars)
 }
 
-fn mysynth_impl<'a>(ces: impl Iterator<Item=&'a CounterExample> + Clone, num_vars: usize) -> P {
+fn mysynth_impl(ces: impl CEIter, num_vars: usize) -> P {
     for x in 0..num_vars {
-        if ces.clone().all(|ce| ce.r == ce.sigma[x]) {
+        if ces.ce_iter().all(|ce| ce.r == ce.sigma[x]) {
             return P::Var(x);
         }
     }
@@ -48,7 +48,7 @@ fn mysynth_impl<'a>(ces: impl Iterator<Item=&'a CounterExample> + Clone, num_var
         for y in 0..num_vars {
             let mut l: Vec<&CounterExample> = Vec::new();
             let mut r: Vec<&CounterExample> = Vec::new();
-            for ce in ces.clone() {
+            for ce in ces.ce_iter() {
                 if ce.sigma[x] < ce.sigma[y] {
                     l.push(ce);
                 } else {
@@ -69,8 +69,24 @@ fn mysynth_impl<'a>(ces: impl Iterator<Item=&'a CounterExample> + Clone, num_var
     assert!(best_l.len() > 0);
     assert!(best_r.len() > 0);
 
-    let l = mysynth_impl(best_l.into_iter(), num_vars);
-    let r = mysynth_impl(best_r.into_iter(), num_vars);
+    let l = mysynth_impl(&*best_l, num_vars);
+    let r = mysynth_impl(&*best_r, num_vars);
 
     P::IfLt(Box::new([P::Var(best_x), P::Var(best_y), l, r]))
+}
+
+trait CEIter {
+    fn ce_iter(&self) -> impl Iterator<Item=&CounterExample>;
+}
+
+impl CEIter for &[CounterExample] {
+    fn ce_iter(&self) -> impl Iterator<Item=&CounterExample> {
+        self.iter()
+    }
+}
+
+impl CEIter for &[&CounterExample] {
+    fn ce_iter(&self) -> impl Iterator<Item=&CounterExample> {
+        self.iter().copied()
+    }
 }
